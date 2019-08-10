@@ -2,6 +2,7 @@
 
 namespace App\Http\Proxy;
 
+
 class TokenProxy {
 
     protected $http;
@@ -16,66 +17,25 @@ class TokenProxy {
         $this->http = $http;
     }
 
-    public function login($email, $password)
+    public function login($email,$password)
     {
-        if (auth()->attempt(['email' => $email, 'password' => $password, 'is_active' => 1])) {
-            return $this->proxy('password', [
-                'username' => $email,
-                'password' => $password,
-                'scope'    => '',
-            ]);
-        }
-
-        return response()->json([
-            'status'  => false,
-            'message' => 'Credentials not match',
-        ], 421);
-    }
-
-    public function refresh()
-    {
-        $refreshToken = request()->cookie('refreshToken');
-
-        return $this->proxy('refresh_token', [
-            'refresh_token' => $refreshToken,
-        ]);
-    }
-
-    public function logout()
-    {
-        $user = auth()->guard('api')->user();
-        if (is_null($user)) {
-            app('cookie')->queue(app('cookie')->forget('refreshToken'));
-
-            return response()->json([
-                'message' => 'Logout!',
-            ], 204);
-        }
-
-        $accessToken = $user->token();
-
-        app('db')->table('oauth_refresh_tokens')
-            ->where('access_token_id', $accessToken->id)
-            ->update([
-                'revoked' => true,
-            ]);
-
-        app('cookie')->queue(app('cookie')->forget('refreshToken'));
-
-        $accessToken->revoke();
-
-        return response()->json([
-            'message' => 'Logout!',
-        ], 204);
-
+        if(auth()->attempt(['email'=>$email,'password'=>$password,'is_active'=>1])){
+            return $this->proxy(
+                'password',[
+                    'username'=>$email,
+                    'password'=>$password,
+                    'scope'=>''
+                    ]
+                );
+            }
+            return Response()->json([
+                'status' => false,
+                'message' => 'Credentials not match'
+            ],421);
     }
 
     public function proxy($grantType, array $data = [])
     {
-        $ch = curl_init("http://laravel.test");    // initialize curl handle
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        $data = curl_exec($ch);
-        dd($data);
         $data = array_merge($data, [
             'client_id'     => env('PASSPORT_CLIENT_ID',2),
             'client_secret' => env('PASSPORT_CLIENT_SECRET','GpHCkm6HXrBTEIS9RHExJ3pNRSIi2Do0dOxgdfVQ'),

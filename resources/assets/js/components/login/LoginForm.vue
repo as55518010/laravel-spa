@@ -45,8 +45,14 @@
                     password : this.password
                 }
                return axios.post('/api/login',formData).then(response => {
-                   JWTToken.setTonken(response.data.access_token)
                    console.log(response.data);
+                   JWTToken.setTonken(response.data.token)
+                   console.log(this.$store.state.AuthUser.authenticates);
+                //    this.$store.state.AuthUser.authenticates = ture
+                   this.$router.push({name:'profile'})
+                }).catch(error=>{
+                    console.log(error.response.data)
+
                 })
             }
         }
